@@ -1,0 +1,12 @@
+Explicacion de cada archivo creado. 
+
+
+components/pagesmult/BtnLog: 
+
+Descripcion: RENDERIZA UN CONJUNTOS DE BOTONES PARA INICIAR SESION CON GOOGLE, FACEBOOK, TWITTER Y GITHUB. ACTUALMENTE SOLO COLOQUE LA IMAGEN PERO EN LE FUTURO SE REALIZARA SU IMPLEMENTACION. 
+
+
+components/pagesmult/Inputs: 
+ 
+
+
