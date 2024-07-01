@@ -37,8 +37,8 @@ export const UserProvider = ({ children }) => {
       const res = await axios.put('http://localhost:3000/api/usuario', updatedData, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setUser(res.data);
-      return res.data;
+      setUser(res.data.user); // Actualiza el estado del usuario con los datos devueltos
+      return res.data.user; // Devuelve el usuario actualizado
     } catch (error) {
       console.error('Update user error:', error);
       throw error;
@@ -46,21 +46,27 @@ export const UserProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      axios.get('http://localhost:3000/api/usuario', { headers: { Authorization: token } })
-        .then(res => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const res = await axios.get('http://localhost:3000/api/usuario', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
           setUser(res.data);
           setIsAuthenticated(true);
-        })
-        .catch(err => {
-          console.error('Error loading user:', err);
-          logout();
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error('Error loading user:', error);
+        logout(); // Debes definir la función logout para manejar la desconexión en caso de error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
   }, []);
 
   return (

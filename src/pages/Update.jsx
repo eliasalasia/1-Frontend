@@ -1,13 +1,12 @@
-import React, { useState, useContext, useRef } from 'react';
+import React, { useState, useContext, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import UserContext from '../services/UserContext';
+import { useUser } from '../services/UserContext';
 
 function Update() {
-  const { user, updateUser, logout } = useContext(UserContext);
+  const { user, updateUser, logout } = useUser();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const fileInputRef = useRef(null);
-
   const [formData, setFormData] = useState({
     name: user.name || '',
     bio: user.biografia || '',
@@ -15,7 +14,19 @@ function Update() {
     email: user.email || '',
     password: ''
   });
-  const [photo, setPhoto] = useState(user.photo || '/path-to-default-profile-image.jpg');
+  const [photo, setPhoto] = useState(user.perfil || '/path-to-default-profile-image.jpg');
+  const [updateMessage, setUpdateMessage] = useState('');
+
+  useEffect(() => {
+    setFormData({
+      name: user.name || '',
+      bio: user.biografia || '',
+      phone: user.phone || '',
+      email: user.email || '',
+      password: ''
+    });
+    setPhoto(user.perfil || '/path-to-default-profile-image.jpg');
+  }, [user]);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -41,18 +52,25 @@ function Update() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const updatedData = { ...formData, photo };
-      await updateUser(updatedData);
-      console.log('Perfil actualizado correctamente');
-      navigate('/info');
+      const formDataToUpdate = new FormData();
+      formDataToUpdate.append('name', formData.name);
+      formDataToUpdate.append('biografia', formData.bio);
+      formDataToUpdate.append('phone', formData.phone);
+      formDataToUpdate.append('email', formData.email);
+      formDataToUpdate.append('password', formData.password);
+      formDataToUpdate.append('perfil', photo);
+
+      const updatedUser = await updateUser(formDataToUpdate);
+      setUpdateMessage('Datos actualizados');
+      navigate('/info'); // Redirige después de actualizar correctamente
     } catch (error) {
       console.error('Error updating user:', error.response ? error.response.data : error.message);
-      // Puedes mostrar un mensaje al usuario o realizar alguna acción de recuperación aquí
+      setUpdateMessage('Los datos no fueron actualizados');
     }
   };
 
   const handleBack = () => {
-    navigate('/info');
+    navigate('/info'); // Asegura que vuelva a la página anterior
   };
 
   const handleLogout = () => {
@@ -87,6 +105,7 @@ function Update() {
           <button onClick={handleBack} className="text-blue-500 mb-4">← Back</button>
           <h2 className="text-2xl font-medium">Change Info</h2>
           <p className="text-sm text-gray-500">Changes will be reflected to every services</p>
+          {updateMessage && <p className="text-green-500">{updateMessage}</p>}
         </div>
 
         <div className="p-6">
@@ -119,7 +138,7 @@ function Update() {
               <label className="block text-sm text-gray-700 mb-2">Bio</label>
               <textarea
                 name="bio"
-                value={formData.biografia}
+                value={formData.bio}
                 onChange={handleChange}
                 placeholder="Enter your bio..."
                 className="w-full p-2 border border-gray-300 rounded-lg"

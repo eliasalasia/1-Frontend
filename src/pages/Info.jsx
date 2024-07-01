@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useUser } from '../services/UserContext'; // Importa useUser desde el contexto
+import { useUser } from '../services/UserContext'; 
 
 function Info() {
-  const { user, loading, isAuthenticated, logout } = useUser();
+  const { user, loading, isAuthenticated, logout, updateUser } = useUser();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [updatedMessage, setUpdatedMessage] = useState('');
 
   useEffect(() => {
     // Si no está autenticado y ha terminado de cargar, redirige a la página de login
@@ -21,17 +22,33 @@ function Info() {
     navigate('/login');
   };
 
+  const updateProfile = async (req, res) => {
+    const { name, biografia, phone, email, password } = req.body;
+    const perfil = req.file ? req.file.filename : req.user.perfil; 
+    try {
+      const hashedPassword = password ? await bcrypt.hash(password, 10) : req.user.password;
   
+      await pool.query(
+        'UPDATE users SET name = ?, biografia = ?, phone = ?, email = ?, password = ?, perfil = ? WHERE id = ?',
+        [name, biografia, phone, email, hashedPassword, perfil, req.user.id]
+      );
+  
+      const [updatedUser] = await pool.query('SELECT * FROM users WHERE id = ?', [req.user.id]);
+      res.json({ user: updatedUser });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('Server error');
+    }
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
-
 
   if (!isAuthenticated || !user) {
     return null; 
   }
 
-  
   const imageUrl = user && user.perfil ? `http://localhost:3000/${user.perfil}` : '/path-to-default-profile-image.jpg';
 
   return (
@@ -71,6 +88,7 @@ function Info() {
         </div>
 
         <div className="p-6">
+          {updatedMessage && <p className="mb-4 text-green-500">{updatedMessage}</p>}
           <div className="flex items-center mb-6">
             <img src={imageUrl || '/path-to-default-profile-image.jpg'} alt="Profile" className="w-16 h-16 rounded-lg mr-4 object-cover" />
             <span className="text-gray-500 text-sm ml-2">Photo</span>
